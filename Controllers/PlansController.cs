@@ -11,15 +11,22 @@ namespace SmartFlashcards_API.Controllers
     public class PlansController : ApiController
     {
         private readonly PlanAccessor _planAccessor = new PlanAccessor();
-
+        private readonly LimitAccessor _limits = new LimitAccessor();
         private AutoMapper.IMapper Mapper => WebApiApplication.MapperInstance;
 
         [HttpGet]
-        public IEnumerable<PlanDto> Get()
+        public IEnumerable<PlanWithLimitsDto> Get()
         {
             var plans = _planAccessor.GetAll();
 
-            return plans.Select(p => Mapper.Map<PlanDto>(p));
+            return plans.Select(p =>
+            {
+                var dto = Mapper.Map<PlanWithLimitsDto>(p);
+                dto.limits = _limits.GetByPlanId(p.plan_id)
+                    .Select(x => Mapper.Map<LimitDto>(x))
+                    .ToList();
+                return dto;
+            });
         }
 
         [HttpGet]
@@ -29,7 +36,11 @@ namespace SmartFlashcards_API.Controllers
             if (plan == null)
                 return NotFound();
 
-            var dto = Mapper.Map<PlanDto>(plan);
+            var dto = Mapper.Map<PlanWithLimitsDto>(plan);
+            dto.limits = _limits.GetByPlanId(plan.plan_id)
+                .Select(x => Mapper.Map<LimitDto>(x))
+                .ToList();
+
             return Ok(dto);
         }
 
@@ -43,7 +54,7 @@ namespace SmartFlashcards_API.Controllers
                 return BadRequest(ModelState);
 
             var plan = Mapper.Map<Plan>(dto);
-            plan.plan_id = Guid.NewGuid(); 
+            plan.plan_id = Guid.NewGuid();
 
             _planAccessor.Add(plan);
 
@@ -72,8 +83,19 @@ namespace SmartFlashcards_API.Controllers
 
             _planAccessor.Update(existing);
 
-            var updatedDto = Mapper.Map<PlanDto>(existing);
-            return Ok(updatedDto);
+            var outDto = Mapper.Map<PlanDto>(existing);
+            return Ok(outDto);
+        }
+
+        [HttpDelete]
+        public IHttpActionResult Delete(Guid id)
+        {
+            var existing = _planAccessor.GetById(id);
+            if (existing == null)
+                return NotFound();
+
+            _planAccessor.Delete(id);
+            return Ok();
         }
     }
 }

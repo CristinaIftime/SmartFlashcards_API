@@ -1,26 +1,306 @@
-﻿<main>
-    <section class="row" aria-labelledby="aspnetTitle">
-        <h1 id="aspnetTitle">ASP.NET</h1>
-        <p class="lead">ASP.NET is a free web framework for building great Web sites and Web applications using HTML, CSS, and JavaScript.</p>
-        <p><a href="https://asp.net" class="btn btn-primary btn-md">Learn more &raquo;</a></p>
-    </section>
-    <div class="row">
-        <section class="col-md-4" aria-labelledby="gettingStartedTitle">
-            <h2 id="gettingStartedTitle">Getting started</h2>
-            <p>ASP.NET Web API is a framework that makes it easy to build HTTP services that reach
-            a broad range of clients, including browsers and mobile devices. ASP.NET Web API
-            is an ideal platform for building RESTful applications on the .NET Framework.</p>
-            <p><a class="btn btn-outline-dark" href="https://go.microsoft.com/fwlink/?LinkId=301870">Learn more &raquo;</a></p>
-        </section>
-        <section class="col-md-4" aria-labelledby="librariesTitle">
-            <h2 id="librariesTitle">Get more libraries</h2>
-            <p>NuGet is a free Visual Studio extension that makes it easy to add, remove, and update libraries and tools in Visual Studio projects.</p>
-            <p><a class="btn btn-outline-dark" href="https://go.microsoft.com/fwlink/?LinkId=301871">Learn more &raquo;</a></p>
-        </section>
-        <section class="col-md-4" aria-labelledby="hostingTitle">
-            <h2 id="hostingTitle">Web Hosting</h2>
-            <p>You can easily find a web hosting company that offers the right mix of features and price for your applications.</p>
-            <p><a class="btn btn-outline-dark" href="https://go.microsoft.com/fwlink/?LinkId=301872">Learn more &raquo;</a></p>
-        </section>>
+﻿@{
+    ViewBag.Title = "SmartFlashcards";
+}
+
+<div style="max-width: 900px; margin: 30px auto; font-family: Arial;">
+    <h1 style="margin-bottom: 6px;">SmartFlashcards</h1>
+    <div style="color: #555; margin-bottom: 18px;">Demo frontend pentru API: login/register, plan, upload (mock), upgrade la limită.</div>
+
+    <div id="authBox" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px;">
+        <div style="border: 1px solid #ddd; border-radius: 10px; padding: 14px;">
+            <h3 style="margin-top: 0;">Login</h3>
+            <div style="display: grid; gap: 8px;">
+                <input id="loginEmail" placeholder="Email" style="padding: 10px; border: 1px solid #ccc; border-radius: 8px;" />
+                <input id="loginPass" type="password" placeholder="Parola" style="padding: 10px; border: 1px solid #ccc; border-radius: 8px;" />
+                <button onclick="login()" style="padding: 10px; border: 0; border-radius: 8px; background: #111; color: #fff; cursor: pointer;">Login</button>
+                <div id="loginMsg" style="color:#b00020;"></div>
+            </div>
+        </div>
+
+        <div style="border: 1px solid #ddd; border-radius: 10px; padding: 14px;">
+            <h3 style="margin-top: 0;">Register</h3>
+            <div style="display: grid; gap: 8px;">
+                <input id="regEmail" placeholder="Email" style="padding: 10px; border: 1px solid #ccc; border-radius: 8px;" />
+                <input id="regEmail2" placeholder="Confirm email" style="padding: 10px; border: 1px solid #ccc; border-radius: 8px;" />
+                <input id="regPass" type="password" placeholder="Parola" style="padding: 10px; border: 1px solid #ccc; border-radius: 8px;" />
+                <button onclick="registerUser()" style="padding: 10px; border: 0; border-radius: 8px; background: #0b5; color: #fff; cursor: pointer;">Register</button>
+                <div id="regMsg" style="color:#b00020;"></div>
+            </div>
+        </div>
     </div>
-</main>
+
+    <div id="appBox" style="display:none; border: 1px solid #ddd; border-radius: 12px; padding: 14px; margin-bottom: 18px;">
+        <div style="display:flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <div>
+                <div style="font-weight: bold;">Logged in as: <span id="who"></span></div>
+                <div style="color:#555;">UserId: <span id="uid"></span></div>
+            </div>
+            <div style="display:flex; gap: 10px; flex-wrap: wrap;">
+                <button onclick="logout()" style="padding: 10px 12px; border-radius: 8px; border: 1px solid #ccc; background: #fff; cursor:pointer;">Logout</button>
+                <button id="btnPlans" onclick="loadPlans()" style="padding: 10px 12px; border-radius: 8px; border: 0; background: #111; color: #fff; cursor:pointer;">Get plan</button>
+            </div>
+        </div>
+
+        <div id="subBox" style="margin-top: 14px; padding: 12px; border-radius: 10px; background: #f7f7f7;"></div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 14px;">
+            <div id="plansPanel" style="border: 1px solid #eee; border-radius: 10px; padding: 12px; display:none;">
+                <div style="font-weight:bold; margin-bottom: 8px;">Plans</div>
+                <div id="plansList" style="display:grid; gap: 8px;"></div>
+            </div>
+
+            <div id="uploadPanel" style="border: 1px solid #eee; border-radius: 10px; padding: 12px; display:none;">
+                <div style="font-weight:bold; margin-bottom: 8px;">Upload (mock)</div>
+                <div style="display:flex; gap: 8px; align-items:center; margin-bottom:10px;">
+                    <span style="color:#555;">cards_target</span>
+                    <input id="cardsTarget" type="number" value="5" min="1" style="padding: 8px; border: 1px solid #ccc; border-radius: 8px; width: 90px;" />
+                    <button id="btnUpload" onclick="simulateUpload()" style="padding: 10px 12px; border-radius: 8px; border: 0; background: #2563eb; color: #fff; cursor:pointer;">Upload</button>
+                </div>
+                <div id="uploadOut" style="white-space: pre-wrap; font-family: Consolas, monospace; font-size: 13px;"></div>
+            </div>
+        </div>
+
+        <div id="upgradeBox" style="display:none; margin-top: 14px; border: 1px solid #ffd6a5; background: #fff7ed; border-radius: 10px; padding: 12px;"></div>
+    </div>
+</div>
+
+<script>
+    const api = "";
+
+    function setLoggedIn(user) {
+        localStorage.setItem("sf_user_id", user.user_id);
+        localStorage.setItem("sf_email", user.email);
+        localStorage.removeItem("sf_limit_reached");
+        syncUi();
+    }
+
+    function clearLoggedIn() {
+        localStorage.removeItem("sf_user_id");
+        localStorage.removeItem("sf_email");
+        localStorage.removeItem("sf_limit_reached");
+        syncUi();
+    }
+
+    function show(elId, yes) {
+        document.getElementById(elId).style.display = yes ? "block" : "none";
+    }
+
+    function setPlansButtonLabel(hasSub) {
+        const btn = document.getElementById("btnPlans");
+        btn.textContent = hasSub ? "Show plans" : "Get plan";
+    }
+
+    async function syncUi() {
+        const id = localStorage.getItem("sf_user_id");
+        const email = localStorage.getItem("sf_email");
+        const limitReached = localStorage.getItem("sf_limit_reached") === "1";
+
+        document.getElementById("authBox").style.display = id ? "none" : "grid";
+        document.getElementById("appBox").style.display = id ? "block" : "none";
+
+        if (!id) return;
+
+        document.getElementById("uid").textContent = id;
+        document.getElementById("who").textContent = email || "";
+
+        show("upgradeBox", false);
+
+        const sub = await getSubscription(id);
+
+        if (!sub.hasSub) {
+            setPlansButtonLabel(false);
+            show("plansPanel", true);
+            show("uploadPanel", false);
+            localStorage.removeItem("sf_limit_reached");
+            await loadPlans(true);
+            return;
+        }
+
+        setPlansButtonLabel(true);
+
+        if (limitReached) {
+            show("plansPanel", false);
+            show("uploadPanel", false);
+            return;
+        }
+
+        show("plansPanel", false);
+        show("uploadPanel", true);
+    }
+
+    async function jsonFetch(url, options) {
+        const resp = await fetch(url, options);
+        const text = await resp.text();
+        let data = null;
+        try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+        return { resp, data };
+    }
+
+    async function getSubscription(userId) {
+        const box = document.getElementById("subBox");
+        box.textContent = "Loading subscription...";
+
+        const { resp, data } = await jsonFetch(`${api}/api/users/${userId}/subscription`, { method: "GET" });
+
+        if (resp.status === 404) {
+            box.innerHTML = `<div style="font-weight:bold;">No active subscription</div><div style="color:#555;">Choose a plan to start.</div>`;
+            return { hasSub: false, data: null };
+        }
+
+        if (!resp.ok) {
+            box.textContent = "Failed to load subscription.";
+            return { hasSub: false, data: null };
+        }
+
+        const plan = data.plan ? `${data.plan.type} (${(data.plan.price_cents / 100).toFixed(2)} ${data.plan.currency}/${data.plan.billing_period})` : data.plan_id;
+        box.innerHTML = `<div style="font-weight:bold;">Active subscription</div>
+                   <div>Plan: ${plan}</div>
+                   <div>Status: ${data.status}</div>
+                   <div>Period: ${data.current_period_start} → ${data.current_period_end}</div>`;
+        return { hasSub: true, data };
+    }
+
+    async function login() {
+        document.getElementById("loginMsg").textContent = "";
+        const email = document.getElementById("loginEmail").value.trim();
+        const password = document.getElementById("loginPass").value;
+
+        const { resp, data } = await jsonFetch(`${api}/api/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password })
+        });
+
+        if (!resp.ok) {
+            document.getElementById("loginMsg").textContent = "Login failed.";
+            return;
+        }
+        setLoggedIn(data);
+    }
+
+    async function registerUser() {
+        document.getElementById("regMsg").textContent = "";
+        const email = document.getElementById("regEmail").value.trim();
+        const email2 = document.getElementById("regEmail2").value.trim();
+        const password = document.getElementById("regPass").value;
+
+        if (!email || !email2 || email !== email2) {
+            document.getElementById("regMsg").textContent = "Email confirmation does not match.";
+            return;
+        }
+
+        const { resp, data } = await jsonFetch(`${api}/api/users`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password })
+        });
+
+        if (!resp.ok) {
+            document.getElementById("regMsg").textContent = (data && data.Message) ? data.Message : "Register failed.";
+            return;
+        }
+
+        setLoggedIn(data);
+    }
+
+    function logout() {
+        clearLoggedIn();
+    }
+
+    async function loadPlans(forceShowPanel) {
+        localStorage.removeItem("sf_limit_reached");
+        show("upgradeBox", false);
+
+        const list = document.getElementById("plansList");
+        list.textContent = "Loading...";
+
+        if (forceShowPanel) show("plansPanel", true);
+
+        const { resp, data } = await jsonFetch(`${api}/api/plans`, { method: "GET" });
+        if (!resp.ok) { list.textContent = "Failed to load plans."; return; }
+
+        list.innerHTML = "";
+        data.forEach(p => {
+            const limitsText = (p.limits && p.limits.length)
+                ? p.limits.map(l => `${l.value} ${l.limit_code.replaceAll("_", " ")}`).join(" • ")
+                : "";
+
+            const el = document.createElement("div");
+            el.style.border = "1px solid #ddd";
+            el.style.borderRadius = "10px";
+            el.style.padding = "10px";
+            el.innerHTML = `
+                <div style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+                    <div style="font-weight:bold;">${p.type}</div>
+                    <div style="color:#555;">${(p.price_cents / 100).toFixed(2)} ${p.currency} / ${p.billing_period}</div>
+                </div>
+                ${limitsText ? `<div style="color:#555; margin-top:6px;">${limitsText}</div>` : ""}
+                <button style="margin-top:8px; padding:8px 10px; border-radius:8px; border:0; background:#111; color:#fff; cursor:pointer;"
+                        onclick="upgradeTo('${p.plan_id}')">Choose plan</button>
+            `;
+            list.appendChild(el);
+        });
+    }
+
+    async function upgradeTo(planId) {
+        const userId = localStorage.getItem("sf_user_id");
+        const { resp } = await jsonFetch(`${api}/api/users/${userId}/upgrade`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ plan_id: planId })
+        });
+
+        if (!resp.ok) {
+            alert("Upgrade failed.");
+            return;
+        }
+
+        localStorage.removeItem("sf_limit_reached");
+        show("upgradeBox", false);
+        document.getElementById("uploadOut").textContent = "Subscription updated.";
+
+        await syncUi();
+    }
+
+    async function simulateUpload() {
+        const userId = localStorage.getItem("sf_user_id");
+        const cards_target = parseInt(document.getElementById("cardsTarget").value || "1");
+
+        const { resp, data } = await jsonFetch(`${api}/api/users/${userId}/simulate-upload`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ cards_target })
+        });
+
+        if (resp.status === 403 && data && data.upgrade_required) {
+            localStorage.setItem("sf_limit_reached", "1");
+
+            show("uploadPanel", false);
+
+            const box = document.getElementById("upgradeBox");
+            show("upgradeBox", true);
+
+            const plans = (data.available_plans || []).map(p =>
+                `<button onclick="upgradeTo('${p.plan_id}')" style="padding:8px 10px; border-radius:8px; border:0; background:#111; color:#fff; cursor:pointer; margin-right:8px; margin-top:8px;">
+                    Upgrade to ${p.type}
+                </button>`
+            ).join("");
+
+            box.innerHTML = `
+                <div style="font-weight:bold; margin-bottom:6px;">Limit reached</div>
+                <div style="color:#555;">${data.message}</div>
+                <div style="color:#555; margin-top:6px;">Remaining requests: ${data.remaining_requests}, remaining cards: ${data.remaining_cards}</div>
+                <div style="margin-top:10px;">${plans}</div>
+            `;
+
+            document.getElementById("uploadOut").textContent = JSON.stringify(data, null, 2);
+            await getSubscription(userId);
+            return;
+        }
+
+        document.getElementById("uploadOut").textContent = resp.ok ? JSON.stringify(data, null, 2) : "Upload failed.";
+        await getSubscription(userId);
+    }
+
+    syncUi();
+</script>
